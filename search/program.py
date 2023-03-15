@@ -17,7 +17,13 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     ## calculation 
     # for every blue hex, check every red hex for distance
-    
+    # if closer distance found, record
+
+    # shortest_distance = 0
+    # for every blue hex 
+    #      for every red hex
+
+    #         if heuristic(blue, red) <   
 
     ## make the move
 
