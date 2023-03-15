@@ -51,3 +51,13 @@ def heuristic(firstHex: tuple, secondHex: tuple):
     distance = math.dist(firstHex - secondHex)
     
     return distance
+
+
+# checks the current game state, returns list of opponent tiles. If none, returns empty list.
+# takes dictionary of (r,q):(player,k) and colour 
+def check_grid(input: dict[tuple, tuple], colour):
+    tmp = list()
+    for key,value in input.items():
+        if colour in value:
+            tmp.append(key+value)
+    return tmp
