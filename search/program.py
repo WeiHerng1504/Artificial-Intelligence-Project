@@ -1,6 +1,7 @@
 # COMP30024 Artificial Intelligence, Semester 1 2023
 # Project Part A: Single Player Infexion
 
+import math
 from .utils import render_board
 
 
@@ -15,6 +16,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     """
 
     ## calculation 
+    # for every blue hex, check every red hex for distance
+    
 
     ## make the move
 
@@ -34,3 +37,11 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
         (1, 4, 0, -1),
         (1, 3, 0, -1)
     ]
+
+
+# calculates and returns straight line distance
+def heuristic(firstHex: tuple, secondHex: tuple):
+
+    distance = math.dist(firstHex - secondHex)
+    
+    return distance
