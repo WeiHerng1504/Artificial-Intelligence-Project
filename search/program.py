@@ -14,6 +14,12 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     See the specification document for more details.
     """
 
+    ## calculation 
+
+    ## make the move
+
+    
+
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
     # to True to see a colour-coded version (if your terminal supports it).
