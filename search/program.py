@@ -19,6 +19,18 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     # for every blue hex, check every red hex for distance
     # if closer distance found, record
 
+    changableGrid = input
+    blueHexes = check_grid(input, 'r')
+
+    while blueHexes:
+
+        for blueHex in blueHexes:
+            for coord, details in changableGrid:
+
+                print(hex.val) 
+        
+        
+
     # shortest_distance = 0
     # for every blue hex 
     #      for every red hex
