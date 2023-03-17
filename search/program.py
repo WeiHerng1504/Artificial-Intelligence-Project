@@ -20,14 +20,43 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     # if closer distance found, record
 
     changableGrid = input
-    blueHexes = check_grid(input, 'r')
+    blueHexes = check_grid(input, 'b')
+    redHexes = check_grid(input, 'r')
+    #print(blueHexes)
+    #print(redHexes)
+    list_of_moves = []
 
-    while blueHexes:
+    shortest_distance = 100
+
+    # (r, q) : (r direction, q direction)
+    # optimal_move = ()
+
+    # loop while there are still blue hexes on grid
+    while check_grid(input, 'b'):
 
         for blueHex in blueHexes:
-            for coord, details in changableGrid:
+           for redHex in redHexes:
+               
+               move_considered = heuristic(blueHex, redHex)
+               if move_considered[0] < shortest_distance:
+                   shortest_distance = move_considered[0]
+                   optimal_move = (redHex, move_considered[1])
 
-                print(hex.val) 
+        
+        # normalise optimal move, NEEDS IMPROVEMENT
+
+        if optimal_move[1][0] !=0:
+            optimal_move[1][0] = int(optimal_move[1][0] / abs(optimal_move[1][0]))
+
+        if optimal_move[1][1] !=0:
+            optimal_move[1][1] = int(optimal_move[1][1] / abs(optimal_move[1][1]))
+
+        
+        print(optimal_move)
+
+        list_of_moves.append((optimal_move[0][0], optimal_move[0][1], optimal_move[1]))
+        #break
+               
         
         
 
@@ -57,12 +86,46 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     ]
 
 
-# calculates and returns straight line distance
-def heuristic(firstHex: tuple, secondHex: tuple):
+def changeGrid(grid: dict[tuple, tuple], optimal_move: tuple):
 
-    distance = math.dist(firstHex - secondHex)
+    # spread the hexes
     
-    return distance
+
+    
+    # change start hex power to 1
+
+    return grid
+
+
+
+
+# calculates and returns straight line distance
+def heuristic(blueHex: tuple, redHex: tuple):
+
+    # directions to move, normalized
+    direction = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
+
+    # initial idea, NEEDS IMPROVEMENT!!!!
+    if direction[0] > 3:
+        direction[0] = direction[0] - 6
+    elif direction[0] < -3:
+        direction[0] = 6 + direction[0]
+
+    if direction[1] > 3:
+        direction[1] = direction[1] - 6
+    elif direction[1] < -3:
+        direction[1] = 6 + direction[1]
+
+    
+    #print('direction is ' + str(direction[0]) + ' ' + str(direction[1]))
+
+    # make a spread action in the direction according to power
+    afterSpread = (redHex[0] + direction[0]*redHex[3], redHex[1] + direction[1]*redHex[3])
+
+    # calculate distance after spread to blueHex being considered
+    distance = math.dist((blueHex[0], blueHex[1]), afterSpread)
+    
+    return (distance, direction)
 
 
 # checks the current game state, returns list of opponent tiles. If none, returns empty list.
