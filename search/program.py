@@ -122,7 +122,7 @@ def heuristic(blueHex: tuple, redHex: tuple):
         direction[1] = direction[1] - 6
     elif direction[1] < -3:
         direction[1] = 6 + direction[1]
-
+ 
     
     #print('direction is ' + str(direction[0]) + ' ' + str(direction[1]))
 
@@ -135,11 +135,11 @@ def heuristic(blueHex: tuple, redHex: tuple):
     return (distance, direction)
 
 
-# checks the current game state, returns list of opponent tiles. If none, returns empty list.
+# checks the current game state, returns dict of opponent tiles. If none, returns empty dict.
 # takes dictionary of (r,q):(player,k) and colour 
 def check_grid(input: dict[tuple, tuple], colour):
-    tmp = list()
-    for key,value in input.items():
+    tmp = dict()
+    for key, value in input.items():
         if colour in value:
-            tmp.append(key+value)
+            tmp[key] =  value
     return tmp
