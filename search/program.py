@@ -52,23 +52,16 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
             optimal_move[1][1] = int(optimal_move[1][1] / abs(optimal_move[1][1]))
 
         
-        print(optimal_move)
+        #print(optimal_move)
 
         list_of_moves.append((optimal_move[0][0], optimal_move[0][1], optimal_move[1]))
-        #break
+
+        changableGrid = changeGrid(changableGrid, optimal_move, blueHexes, redHexes)[0]
+        print(blueHex)
+        
                
         
-        
-
-    # shortest_distance = 0
-    # for every blue hex 
-    #      for every red hex
-
-    #         if heuristic(blue, red) <   
-
-    ## make the move
-
-    
+            
 
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
@@ -86,15 +79,29 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     ]
 
 
-def changeGrid(grid: dict[tuple, tuple], optimal_move: tuple):
+def changeGrid(grid: dict[tuple, tuple], optimal_move: tuple, blueHexes: list, redHexes: list):
 
-    # spread the hexes
+    # change starting hex power to 1
+    # grid.update({(optimal_move[0][0], optimal_move[0][1]): ('r', 1)})
     
+    # cahnge 
 
-    
-    # change start hex power to 1
 
-    return grid
+    # spread hexes
+    for power in range(optimal_move[0][3]):
+        r_new = optimal_move[0][0] + optimal_move[1][0] * power
+        q_new = optimal_move[0][1] + optimal_move[1][1] * power
+
+        # maybe change output of check_grid to dict? Then can use pop() instead of list comprehension
+        blueHexes = [hex for hex in blueHexes if hex[0] != r_new and hex[1] != q_new]
+
+        # update red hexes
+        
+
+        #grid.update({(r_new, q_new): ('r', (optimal_move[0][3] + 1) % 7)})
+        
+
+    return (grid, blueHexes)
 
 
 
