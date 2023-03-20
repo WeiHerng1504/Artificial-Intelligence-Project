@@ -19,28 +19,24 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     # for every blue hex, check every red hex for distance
     # if closer distance found, record
 
-    changableGrid = input
     blueHexes = check_grid(input, 'b')
     redHexes = check_grid(input, 'r')
-    #print(blueHexes)
-    #print(redHexes)
     list_of_moves = []
 
-    shortest_distance = 100
-
-    # (r, q) : (r direction, q direction)
-    # optimal_move = ()
-
     # loop while there are still blue hexes on grid
-    while check_grid(input, 'b'):
+    while blueHexes:
 
-        for blueHex in blueHexes:
-           for redHex in redHexes:
+        shortest_distance = 1000
+
+        for blueHex in blueHexes.keys():
+           for redHex in redHexes.keys():
                
-               move_considered = heuristic(blueHex, redHex)
-               if move_considered[0] < shortest_distance:
-                   shortest_distance = move_considered[0]
-                   optimal_move = (redHex, move_considered[1])
+               move_considered = heuristic(blueHex + blueHexes[blueHex], redHex + redHexes[redHex])
+               if (move_considered[0] < shortest_distance) and (move_considered[1][0]*move_considered[1][1] <= 0):
+                    #print('inside if statement ' + str(move_considered))
+                    shortest_distance = move_considered[0]
+                    #print("blueHex is " + str(blueHex) + ", redHXe is " + str(redHex))
+                    optimal_move = (redHex + redHexes[redHex], move_considered[1])
 
         
         # normalise optimal move, NEEDS IMPROVEMENT
@@ -51,16 +47,10 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
         if optimal_move[1][1] !=0:
             optimal_move[1][1] = int(optimal_move[1][1] / abs(optimal_move[1][1]))
 
-        
-        #print(optimal_move)
 
-        list_of_moves.append((optimal_move[0][0], optimal_move[0][1], optimal_move[1]))
+        list_of_moves.append((optimal_move[0][0], optimal_move[0][1], optimal_move[1][0], optimal_move[1][1]))
 
-        changableGrid = changeGrid(changableGrid, optimal_move, blueHexes, redHexes)[0]
-        print(blueHex)
-        
-               
-        
+        changeGrid(optimal_move, blueHexes, redHexes)
             
 
     # The render_board function is useful for debugging -- it will print out a 
@@ -70,38 +60,42 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     # Here we're returning "hardcoded" actions for the given test.csv file.
     # Of course, you'll need to replace this with an actual solution...
-    return [
-        (5, 6, -1, 1),
-        (3, 1, 0, 1),
-        (3, 2, -1, 1),
-        (1, 4, 0, -1),
-        (1, 3, 0, -1)
-    ]
 
 
-def changeGrid(grid: dict[tuple, tuple], optimal_move: tuple, blueHexes: list, redHexes: list):
+    return list_of_moves
 
-    # change starting hex power to 1
-    # grid.update({(optimal_move[0][0], optimal_move[0][1]): ('r', 1)})
+    
+
+
+def changeGrid(optimal_move: tuple, blueHexes: dict, redHexes: dict):
+
+    # change starting hex power to 0
+    #redHexes.update({(optimal_move[0][0], optimal_move[0][1]): ('r', 1)})
+    redHexes.pop((optimal_move[0][0], optimal_move[0][1]), None)
     
     # cahnge 
 
 
-    # spread hexes
-    for power in range(optimal_move[0][3]):
-        r_new = optimal_move[0][0] + optimal_move[1][0] * power
-        q_new = optimal_move[0][1] + optimal_move[1][1] * power
+    # spread hexes, need to handle maximum power
+    for power in range(1, optimal_move[0][3] + 1):
 
-        # maybe change output of check_grid to dict? Then can use pop() instead of list comprehension
-        blueHexes = [hex for hex in blueHexes if hex[0] != r_new and hex[1] != q_new]
+        r_new = (optimal_move[0][0] + optimal_move[1][0] * power) % 7
+        q_new = (optimal_move[0][1] + optimal_move[1][1] * power) % 7
+
+        # convert blue to red
+        if (r_new, q_new) in blueHexes:
+            redHexes.update({(r_new, q_new): (blueHexes[(r_new, q_new)])})
+            blueHexes.pop((r_new, q_new), None)
 
         # update red hexes
-        
+        if (r_new, q_new) in redHexes:
+            redHexes.update({(r_new, q_new): ('r', redHexes[(r_new, q_new)][1] + 1)})
+            if redHexes[(r_new, q_new)][1] == 6:
+                redHexes.pop((r_new, q_new), None)
+        else:
+            redHexes.update({(r_new, q_new): ('r', 1)})
 
-        #grid.update({(r_new, q_new): ('r', (optimal_move[0][3] + 1) % 7)})
-        
-
-    return (grid, blueHexes)
+    return (blueHexes, redHexes)
 
 
 
@@ -122,6 +116,15 @@ def heuristic(blueHex: tuple, redHex: tuple):
         direction[1] = direction[1] - 6
     elif direction[1] < -3:
         direction[1] = 6 + direction[1]
+
+
+    # normalise optimal move, NEEDS IMPROVEMENT
+
+    if direction[0] !=0:
+        direction[0] = int(direction[0] / abs(direction[0]))
+
+    if direction[1] !=0:
+        direction[1] = int(direction[1] / abs(direction[1]))
  
     
     #print('direction is ' + str(direction[0]) + ' ' + str(direction[1]))
@@ -130,6 +133,7 @@ def heuristic(blueHex: tuple, redHex: tuple):
     afterSpread = (redHex[0] + direction[0]*redHex[3], redHex[1] + direction[1]*redHex[3])
 
     # calculate distance after spread to blueHex being considered
+    #print("POINTS FOR DISTANCE " + str(afterSpread))
     distance = math.dist((blueHex[0], blueHex[1]), afterSpread)
     
     return (distance, direction)
@@ -143,3 +147,5 @@ def check_grid(input: dict[tuple, tuple], colour):
         if colour in value:
             tmp[key] =  value
     return tmp
+
+
