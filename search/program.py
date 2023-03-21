@@ -38,9 +38,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                     #print("blueHex is " + str(blueHex) + ", redHXe is " + str(redHex))
                     optimal_move = (redHex + redHexes[redHex], move_considered[1])
 
-        
+      
         # normalise optimal move, NEEDS IMPROVEMENT
-
         if optimal_move[1][0] !=0:
             optimal_move[1][0] = int(optimal_move[1][0] / abs(optimal_move[1][0]))
 
@@ -49,7 +48,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
 
         list_of_moves.append((optimal_move[0][0], optimal_move[0][1], optimal_move[1][0], optimal_move[1][1]))
-
+        
         changeGrid(optimal_move, blueHexes, redHexes)
             
 
@@ -108,33 +107,34 @@ def heuristic(blueHex: tuple, redHex: tuple):
 
     # initial idea, NEEDS IMPROVEMENT!!!!
     if direction[0] > 3:
-        direction[0] = direction[0] - 6
+        direction[0] = direction[0] - 7
     elif direction[0] < -3:
-        direction[0] = 6 + direction[0]
+        direction[0] = 7 + direction[0]
 
     if direction[1] > 3:
-        direction[1] = direction[1] - 6
+        direction[1] = direction[1] - 7
     elif direction[1] < -3:
-        direction[1] = 6 + direction[1]
+        direction[1] = 7 + direction[1]
 
 
     # normalise optimal move, NEEDS IMPROVEMENT
-
     if direction[0] !=0:
         direction[0] = int(direction[0] / abs(direction[0]))
 
     if direction[1] !=0:
         direction[1] = int(direction[1] / abs(direction[1]))
- 
+
+    # if invalid direction, pick upwards or downwards
+    if (direction[0] * direction[1]) > 0:
+        direction[0] = 0
     
-    #print('direction is ' + str(direction[0]) + ' ' + str(direction[1]))
 
     # make a spread action in the direction according to power
     afterSpread = (redHex[0] + direction[0]*redHex[3], redHex[1] + direction[1]*redHex[3])
 
     # calculate distance after spread to blueHex being considered
-    #print("POINTS FOR DISTANCE " + str(afterSpread))
     distance = math.dist((blueHex[0], blueHex[1]), afterSpread)
+   
     
     return (distance, direction)
 
