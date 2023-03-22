@@ -33,9 +33,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                
                move_considered = heuristic(blueHex + blueHexes[blueHex], redHex + redHexes[redHex])
                if (move_considered[0] < shortest_distance) and (move_considered[1][0]*move_considered[1][1] <= 0):
-                    #print('inside if statement ' + str(move_considered))
                     shortest_distance = move_considered[0]
-                    #print("blueHex is " + str(blueHex) + ", redHXe is " + str(redHex))
                     optimal_move = (redHex + redHexes[redHex], move_considered[1])
 
       
@@ -100,7 +98,7 @@ def changeGrid(optimal_move: tuple, blueHexes: dict, redHexes: dict):
 
 
 # calculates and returns straight line distance
-def heuristic(blueHex: tuple, redHex: tuple):
+def heuristic(blueHex: tuple, redHex: tuple, blueHexes: dict):
 
     # directions to move, normalized
     direction = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
