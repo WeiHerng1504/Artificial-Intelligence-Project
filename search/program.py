@@ -2,6 +2,7 @@
 # Project Part A: Single Player Infexion
 
 import math
+import copy
 from .utils import render_board
 
 
@@ -19,36 +20,49 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     # for every blue hex, check every red hex for distance
     # if closer distance found, record
 
-    blueHexes = check_grid(input, 'b')
-    redHexes = check_grid(input, 'r')
+    #blueHexes = check_grid(input, 'b')
+    #redHexes = check_grid(input, 'r')
+    valid_directions = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
+    current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
     list_of_moves = []
+    counter = 0
 
     # loop while there are still blue hexes on grid
-    while blueHexes:
+    while current_grid["blueHexes"]:
+     
+        potential_moves = []
 
-        shortest_distance = 1000
+        # for all red hexes
+        for redHex in current_grid["redHexes"].keys():
+            #generate a possible future state
+            for direction in valid_directions:
+                new_state = generateState(current_grid, redHex, direction)
+                if new_state:
+                    potential_moves.append(new_state)
 
-        for blueHex in blueHexes.keys():
-           for redHex in redHexes.keys():
-               
-               move_considered = heuristic(blueHex + blueHexes[blueHex], redHex + redHexes[redHex])
-               if (move_considered[0] < shortest_distance) and (move_considered[1][0]*move_considered[1][1] <= 0):
-                    shortest_distance = move_considered[0]
-                    optimal_move = (redHex + redHexes[redHex], move_considered[1])
-
-      
-        # normalise optimal move, NEEDS IMPROVEMENT
-        if optimal_move[1][0] !=0:
-            optimal_move[1][0] = int(optimal_move[1][0] / abs(optimal_move[1][0]))
-
-        if optimal_move[1][1] !=0:
-            optimal_move[1][1] = int(optimal_move[1][1] / abs(optimal_move[1][1]))
-
-
-        list_of_moves.append((optimal_move[0][0], optimal_move[0][1], optimal_move[1][0], optimal_move[1][1]))
+        # run a heuristic
+        best_heuristic = [0, 1000]
+        best_state = current_grid
         
-        changeGrid(optimal_move, blueHexes, redHexes)
-            
+        for state in potential_moves:
+      
+            state_heuristic = state[2]
+
+            # converts less hexes, ignore
+            if state_heuristic[0] < best_heuristic[0]:
+                continue
+
+            # more hexes to convert
+            if state_heuristic[0] > best_heuristic[0] or state_heuristic[1] < best_heuristic[1]:
+                best_heuristic = state_heuristic
+                best_state = state
+                continue
+          
+        
+        list_of_moves.append(best_state[1])
+
+        current_grid = best_state[0]
+ 
 
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
@@ -61,80 +75,71 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     return list_of_moves
 
+def heuristic(state_under_consideration: dict[dict, dict]):
+
+    shortest_distance = 1000
+    for blueHex in state_under_consideration["blueHexes"].keys():
+        for redHex in state_under_consideration["redHexes"].keys():
+
+             # directions to move, normalized
+            man_dist = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
+
+            # initial idea, NEEDS IMPROVEMENT!!!!
+            if abs(man_dist[0]) == 6:
+                man_dist[0] = 1
+
+            if abs(man_dist[1]) == 6:
+                man_dist[1] = 1
+
+            distance = math.hypot(man_dist[0], man_dist[1])
+
+            # the shortest possible distance
+            if distance == 0:
+                return distance
+
+            if distance < shortest_distance:
+                shortest_distance = distance
+
+
+    return shortest_distance
     
 
-
-def changeGrid(optimal_move: tuple, blueHexes: dict, redHexes: dict):
-
-    # change starting hex power to 0
-    #redHexes.update({(optimal_move[0][0], optimal_move[0][1]): ('r', 1)})
-    redHexes.pop((optimal_move[0][0], optimal_move[0][1]), None)
     
-    # cahnge 
+def generateState(current_grid: dict[dict, dict], redHex: tuple, direction: tuple):
 
+    heuristic_result = [0, 1000]
+    new_state = copy.deepcopy(current_grid)
 
-    # spread hexes, need to handle maximum power
-    for power in range(1, optimal_move[0][3] + 1):
+    for power in range(1, current_grid["redHexes"][redHex][1] + 1):
 
-        r_new = (optimal_move[0][0] + optimal_move[1][0] * power) % 7
-        q_new = (optimal_move[0][1] + optimal_move[1][1] * power) % 7
+        r_new = (redHex[0] + direction[0] * power) % 7
+        q_new = (redHex[1] + direction[1] * power) % 7
 
-        # convert blue to red
-        if (r_new, q_new) in blueHexes:
-            redHexes.update({(r_new, q_new): (blueHexes[(r_new, q_new)])})
-            blueHexes.pop((r_new, q_new), None)
-
-        # update red hexes
-        if (r_new, q_new) in redHexes:
-            redHexes.update({(r_new, q_new): ('r', redHexes[(r_new, q_new)][1] + 1)})
-            if redHexes[(r_new, q_new)][1] == 6:
-                redHexes.pop((r_new, q_new), None)
-        else:
-            redHexes.update({(r_new, q_new): ('r', 1)})
-
-    return (blueHexes, redHexes)
-
-
-
-
-# calculates and returns straight line distance
-def heuristic(blueHex: tuple, redHex: tuple, blueHexes: dict):
-
-    # directions to move, normalized
-    direction = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
-
-    # initial idea, NEEDS IMPROVEMENT!!!!
-    if direction[0] > 3:
-        direction[0] = direction[0] - 7
-    elif direction[0] < -3:
-        direction[0] = 7 + direction[0]
-
-    if direction[1] > 3:
-        direction[1] = direction[1] - 7
-    elif direction[1] < -3:
-        direction[1] = 7 + direction[1]
-
-
-    # normalise optimal move, NEEDS IMPROVEMENT
-    if direction[0] !=0:
-        direction[0] = int(direction[0] / abs(direction[0]))
-
-    if direction[1] !=0:
-        direction[1] = int(direction[1] / abs(direction[1]))
-
-    # if invalid direction, pick upwards or downwards
-    if (direction[0] * direction[1]) > 0:
-        direction[0] = 0
-    
-
-    # make a spread action in the direction according to power
-    afterSpread = (redHex[0] + direction[0]*redHex[3], redHex[1] + direction[1]*redHex[3])
-
-    # calculate distance after spread to blueHex being considered
-    distance = math.dist((blueHex[0], blueHex[1]), afterSpread)
+        # remove a blue hex
+        if (r_new, q_new) in new_state["blueHexes"]:
+            heuristic_result[0] += 1
+            new_state["redHexes"].update({ (r_new, q_new): (new_state["blueHexes"][(r_new, q_new)])} )
+            new_state["blueHexes"].pop((r_new, q_new), None)
    
+        # update a red hex
+        if (r_new, q_new) in new_state["redHexes"]:
+
+            if new_state["redHexes"][(r_new, q_new)][1] < 6:
+                new_state["redHexes"].update({(r_new, q_new) : ('r', new_state["redHexes"][(r_new, q_new)][1] + 1)})
+            else:
+                new_state["redHexes"].pop((r_new, q_new), None)
+        else:
+            new_state["redHexes"].update({(r_new, q_new) : ('r', 1)})
+
+    new_state["redHexes"].pop((redHex))
+
+    if heuristic_result[0] == 0:
+        heuristic_result[1] = heuristic(new_state)
+
+    if not new_state["redHexes"]:
+        return None
     
-    return (distance, direction)
+    return (new_state, redHex + direction, heuristic_result)
 
 
 # checks the current game state, returns dict of opponent tiles. If none, returns empty dict.
