@@ -20,12 +20,11 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     # for every blue hex, check every red hex for distance
     # if closer distance found, record
 
-    #blueHexes = check_grid(input, 'b')
-    #redHexes = check_grid(input, 'r')
+
     valid_directions = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
     current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
     list_of_moves = []
-    counter = 0
+
 
     # loop while there are still blue hexes on grid
     while current_grid["blueHexes"]:
@@ -41,6 +40,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                     potential_moves.append(new_state)
 
         # run a heuristic
+        # heuristic has two components, first item is hexes converted, second item is shortest straight line distance
         best_heuristic = [0, 1000]
         best_state = current_grid
         
@@ -75,6 +75,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     return list_of_moves
 
+# straight line distance
 def heuristic(state_under_consideration: dict[dict, dict]):
 
     shortest_distance = 1000
@@ -131,11 +132,14 @@ def generateState(current_grid: dict[dict, dict], redHex: tuple, direction: tupl
         else:
             new_state["redHexes"].update({(r_new, q_new) : ('r', 1)})
 
+    # remove starting hex
     new_state["redHexes"].pop((redHex))
 
+    # LOOK AT THIS!!!
     if heuristic_result[0] == 0:
         heuristic_result[1] = heuristic(new_state)
 
+    # state with no redhexes, avoid
     if not new_state["redHexes"]:
         return None
     
