@@ -41,7 +41,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
         # run a heuristic
         # heuristic has two components, first item is hexes converted, second item is shortest straight line distance
-        best_heuristic = [0, 1000, 0]
+        best_heuristic = [0, 1000]
         best_state = current_grid
         
         for state in potential_moves:
@@ -57,11 +57,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                 best_heuristic = state_heuristic
                 best_state = state
                 continue
-            
-            # move towards higher power
-            if state_heuristic[2] > best_heuristic[2]:
-                best_heuristic = state_heuristic
-          
+     
+         
         
         list_of_moves.append(best_state[1])
 
@@ -102,31 +99,23 @@ def heuristic(state_under_consideration: dict[dict, dict]):
 
             distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
 
-            if (blueHex) == (2, 2) and redHex == (3, 2):
-                print("B3")
-                print(distance)
-
-            if blueHex == (4, 4) and redHex == (3, 4):
-                print("B2")
-                print(distance)
+    
                 
 
             if distance > shortest_distance:
-                #print("longer")
+        
                 continue
 
             if distance < shortest_distance:
-                #print("shorter")
+     
                 shortest_distance = distance
                 blue_power = state_under_consideration["blueHexes"][blueHex][1]
                 continue
 
-            if state_under_consideration["blueHexes"][blueHex][1] > blue_power:
-                blue_power = state_under_consideration["blueHexes"][blueHex][1]
-                print("higher power")
+
                 
 
-    return [shortest_distance, blue_power]
+    return [shortest_distance]
     
 
     
