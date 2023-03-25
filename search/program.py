@@ -102,12 +102,21 @@ def heuristic(state_under_consideration: dict[dict, dict]):
 
             distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
 
+            if (blueHex) == (2, 2) and redHex == (3, 2):
+                print("B3")
+                print(distance)
+
+            if blueHex == (4, 4) and redHex == (3, 4):
+                print("B2")
+                print(distance)
+                
+
             if distance > shortest_distance:
-                print("longer")
+                #print("longer")
                 continue
 
             if distance < shortest_distance:
-                print("shorter")
+                #print("shorter")
                 shortest_distance = distance
                 blue_power = state_under_consideration["blueHexes"][blueHex][1]
                 continue
