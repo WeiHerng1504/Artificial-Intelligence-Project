@@ -41,7 +41,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
         # run a heuristic
         # heuristic has two components, first item is hexes converted, second item is shortest straight line distance
-        best_heuristic = [0, 1000]
+        best_heuristic = [0, 1000, 0]
         best_state = current_grid
         
         for state in potential_moves:
@@ -57,11 +57,17 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                 best_heuristic = state_heuristic
                 best_state = state
                 continue
+            
+            # move towards higher power
+            if state_heuristic[2] > best_heuristic[2]:
+                best_heuristic = state_heuristic
           
         
         list_of_moves.append(best_state[1])
 
         current_grid = best_state[0]
+
+       #break
  
 
     # The render_board function is useful for debugging -- it will print out a 
@@ -79,36 +85,45 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 def heuristic(state_under_consideration: dict[dict, dict]):
 
     shortest_distance = 1000
+    blue_power = 0
     for blueHex in state_under_consideration["blueHexes"].keys():
         for redHex in state_under_consideration["redHexes"].keys():
 
              # directions to move, normalized
-            man_dist = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
+            man_dist = [abs(blueHex[0] - redHex[0]), abs(blueHex[1] - redHex[1])]
 
             # initial idea, NEEDS IMPROVEMENT!!!!
-            if abs(man_dist[0]) == 6:
-                man_dist[0] = 1
+            if man_dist[0] > 3:
+                man_dist[0] = abs(man_dist[0] - 7)
 
-            if abs(man_dist[1]) == 6:
-                man_dist[1] = 1
+            if man_dist[1] > 3:
+                man_dist[1] = abs(man_dist[1] - 7)
+            
 
-            distance = math.hypot(man_dist[0], man_dist[1])
+            distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
 
-            # the shortest possible distance
-            if distance == 0:
-                return distance
+            if distance > shortest_distance:
+                print("longer")
+                continue
 
             if distance < shortest_distance:
+                print("shorter")
                 shortest_distance = distance
+                blue_power = state_under_consideration["blueHexes"][blueHex][1]
+                continue
 
+            if state_under_consideration["blueHexes"][blueHex][1] > blue_power:
+                blue_power = state_under_consideration["blueHexes"][blueHex][1]
+                print("higher power")
+                
 
-    return shortest_distance
+    return [shortest_distance, blue_power]
     
 
     
 def generateState(current_grid: dict[dict, dict], redHex: tuple, direction: tuple):
 
-    heuristic_result = [0, 1000]
+    heuristic_result = [0]
     new_state = copy.deepcopy(current_grid)
 
     for power in range(1, current_grid["redHexes"][redHex][1] + 1):
@@ -136,8 +151,7 @@ def generateState(current_grid: dict[dict, dict], redHex: tuple, direction: tupl
     new_state["redHexes"].pop((redHex))
 
     # LOOK AT THIS!!!
-    if heuristic_result[0] == 0:
-        heuristic_result[1] = heuristic(new_state)
+    heuristic_result = heuristic_result + heuristic(new_state)
 
     # state with no redhexes, avoid
     if not new_state["redHexes"]:
