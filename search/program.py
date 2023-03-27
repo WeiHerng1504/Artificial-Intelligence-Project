@@ -23,6 +23,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     valid_directions = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
     current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
+    testing_grid = [[], {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}]
     list_of_moves = []
 
 
@@ -30,6 +31,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     while current_grid["blueHexes"]:
      
         potential_moves = []
+        second_level_pm = []
+        third_level_pm = []
 
         # for all red hexes
         for redHex in current_grid["redHexes"].keys():
@@ -37,14 +40,32 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
             for direction in valid_directions:
                 new_state = generateState(current_grid, redHex, direction)
                 if new_state:
-                    potential_moves.append(new_state)
+                    potential_moves.append((new_state[0], [new_state[1]], new_state[2]))
+
+        # looking two moves ahead
+        for state in potential_moves:
+            for redHex in state[0]["redHexes"]:
+                for direction in valid_directions:
+                    new_state = generateState(state[0], redHex, direction)
+                    if new_state:
+                        print(state)
+                        second_level_pm.append((new_state[0], state[1].append(new_state[1]), new_state[2]))
+
+        # looking three moves ahead
+        for state in second_level_pm:
+            for redHex in state[0]["redHexes"]:
+                for direction in valid_directions:
+                    new_state = generateState(state[0], redHex, direction)
+                    if new_state:
+                        #print(state)
+                        third_level_pm.append((new_state[0], state[1].append(new_state[1]), new_state[2]))
 
         # run a heuristic
         # heuristic has two components, first item is hexes converted, second item is shortest straight line distance
         best_heuristic = [0, 1000]
         best_state = current_grid
         
-        for state in potential_moves:
+        for state in third_level_pm:
       
             state_heuristic = state[2]
 
@@ -60,7 +81,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
      
          
         
-        list_of_moves.append(best_state[1])
+        #list_of_moves.append(best_state[1])
+        list_of_moves += best_state[1][0]
 
         current_grid = best_state[0]
 
@@ -82,7 +104,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 def heuristic(state_under_consideration: dict[dict, dict]):
 
     shortest_distance = 1000
-    blue_power = 0
+ 
     for blueHex in state_under_consideration["blueHexes"].keys():
         for redHex in state_under_consideration["redHexes"].keys():
 
