@@ -22,71 +22,77 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
 
     valid_directions = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
-    current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
-    testing_grid = [[], {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}]
-    list_of_moves = []
 
+    
+    current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
+
+    
+    # gridLayout = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
+    # previous_moves = [(1, 1, 1, 1), (2, 2, 2, 2)]
+    # gameEnded = False
+    # heuristic_results = [0, 1000]
+
+    # state format
+    # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
+
+    # format of a state
+    # state = {"gridLayout": {"blueHexes": check_grid(input, 'b'),  "redHexes": check_grid(input, 'r')}, }
+    potential_moves = []
+    shortest_move_set = 363
+    best_state = []
 
     # loop while there are still blue hexes on grid
     while current_grid["blueHexes"]:
-     
-        potential_moves = []
-        second_level_pm = []
-        third_level_pm = []
-
+        
+    
         # for all red hexes
         for redHex in current_grid["redHexes"].keys():
             #generate a possible future state
             for direction in valid_directions:
                 new_state = generateState(current_grid, redHex, direction)
                 if new_state:
-                    potential_moves.append((new_state[0], [new_state[1]], new_state[2]))
+                    potential_moves.append(new_state)
 
-        # looking two moves ahead
-        for state in potential_moves:
-            for redHex in state[0]["redHexes"]:
-                for direction in valid_directions:
-                    new_state = generateState(state[0], redHex, direction)
-                    if new_state:
-                        print(state)
-                        second_level_pm.append((new_state[0], state[1].append(new_state[1]), new_state[2]))
 
-        # looking three moves ahead
-        for state in second_level_pm:
-            for redHex in state[0]["redHexes"]:
-                for direction in valid_directions:
-                    new_state = generateState(state[0], redHex, direction)
-                    if new_state:
-                        #print(state)
-                        third_level_pm.append((new_state[0], state[1].append(new_state[1]), new_state[2]))
 
         # run a heuristic
         # heuristic has two components, first item is hexes converted, second item is shortest straight line distance
         best_heuristic = [0, 1000]
-        best_state = current_grid
-        
-        for state in third_level_pm:
+     
+        for state in potential_moves:
+
+            # state format
+            # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
       
             state_heuristic = state[2]
 
-            # converts less hexes, ignore
-            if state_heuristic[0] < best_heuristic[0]:
-                continue
+            # converts more
+            if state_heuristic[0] > best_heuristic[0]:
+                best_heuristic[0] = state_heuristic[0]
 
-            # more hexes to convert
-            if state_heuristic[0] > best_heuristic[0] or state_heuristic[1] < best_heuristic[1]:
-                best_heuristic = state_heuristic
+            # shorter distance
+            if state_heuristic[1] < best_heuristic[1]:
+                best_heuristic[1] = state_heuristic[1]
+
+        # keeping only desirable nodes
+        pruned_list = []
+        shortest_move_set = 363
+        for state in potential_moves:
+
+            if state[3] and len(state[1]) < shortest_move_set:
                 best_state = state
-                continue
-     
+                
+
+            state_heuristic = state[2]
+            if state_heuristic[0] == best_heuristic[0] or state_heuristic[1] == best_heuristic[1]:
+                pruned_list.append(state)
          
         
-        #list_of_moves.append(best_state[1])
-        list_of_moves += best_state[1][0]
 
-        current_grid = best_state[0]
 
-       #break
+
+        
+  
  
 
     # The render_board function is useful for debugging -- it will print out a 
@@ -141,12 +147,15 @@ def heuristic(state_under_consideration: dict[dict, dict]):
     
 
     
-def generateState(current_grid: dict[dict, dict], redHex: tuple, direction: tuple):
+def generateState(predecessor: dict[dict, list, list, bool], redHex: tuple, direction: tuple):
+
+    # state format
+    # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
 
     heuristic_result = [0]
-    new_state = copy.deepcopy(current_grid)
+    new_state = copy.deepcopy(predecessor["gridLayout"])
 
-    for power in range(1, current_grid["redHexes"][redHex][1] + 1):
+    for power in range(1, predecessor["gridLayout"]["redHexes"][redHex][1] + 1):
 
         r_new = (redHex[0] + direction[0] * power) % 7
         q_new = (redHex[1] + direction[1] * power) % 7
@@ -173,11 +182,16 @@ def generateState(current_grid: dict[dict, dict], redHex: tuple, direction: tupl
     # LOOK AT THIS!!!
     heuristic_result = heuristic_result + heuristic(new_state)
 
+    if not new_state["blueHexes"]:
+        gameEnded = True
+    else:
+        gameEnded = False
+
     # state with no redhexes, avoid
     if not new_state["redHexes"]:
         return None
     
-    return (new_state, redHex + direction, heuristic_result)
+    return (new_state, predecessor["previous_moves"].append(redHex + direction), heuristic_result, gameEnded)
 
 
 # checks the current game state, returns dict of opponent tiles. If none, returns empty dict.
