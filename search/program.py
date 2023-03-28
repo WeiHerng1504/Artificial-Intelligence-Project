@@ -48,7 +48,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     while not solution:
         
         potential_moves = []
-      
+        print(len(best_states))
         for state in best_states:
             # for all red hexes
             for redHex in state["gridLayout"]["redHexes"]:
@@ -73,11 +73,13 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
             
             # converts more
             if state_heuristic[0] > best_heuristic[0]:
-                best_heuristic[0] = state_heuristic[0]
+                #best_heuristic[0] = state_heuristic[0]
+                best_heuristic = state_heuristic
+                continue
 
             # shorter distance
-            if state_heuristic[1] < best_heuristic[1]:
-                best_heuristic[1] = state_heuristic[1]
+            if state_heuristic[0] == best_heuristic[0] and state_heuristic[1] < best_heuristic[1]:
+                best_heuristic = state_heuristic
 
 
         # keeping only desirable nodes
@@ -96,12 +98,13 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
             #state_heuristic[0] == best_heuristic[0] or
 
             # converts more or equal hexes
-            if state_heuristic[0] == best_heuristic[0]:
+            if (state_heuristic[0] == best_heuristic[0]) and (state_heuristic[1] == best_heuristic[1]):
                 pruned_list.append(state)
-                continue
+                #continue
             
             # shorter or equal distance
-            #if state_heuristic[1] > best_heuristic[1]:
+            #if state_heuristic[1] == best_heuristic[1]:
+            #    pruned_list.append(state)
              #   continue
 
             #if state_heuristic[0] == best_heuristic[0] or state_heuristic[1] == best_heuristic[1]:
