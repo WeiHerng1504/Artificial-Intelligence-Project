@@ -16,34 +16,19 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     See the specification document for more details.
     """
 
-    ## calculation 
-    # for every blue hex, check every red hex for distance
-    # if closer distance found, record
-
-
     valid_directions = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
 
     
     current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
     starting_state = {"gridLayout": current_grid, "previous_moves": [], "heuristic_result": [], "gameEnded": False}
 
-    # gridLayout = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
-    # previous_moves = [(1, 1, 1, 1), (2, 2, 2, 2)]
-    # gameEnded = False
-    # heuristic_results = [0, 1000]
-
     # state format
     # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
 
     # format of a state
     # state = {"gridLayout": {"blueHexes": check_grid(input, 'b'),  "redHexes": check_grid(input, 'r')}, }
-    shortest_move_set = 363
     best_states = [starting_state]
     solution = False
-
-
-    # loop while there are still blue hexes on grid
-    #while current_grid["blueHexes"]:
 
     while not solution:
         
@@ -69,47 +54,30 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
             # state format
             # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
       
-            state_heuristic = state["heuristic_result"]
-            
+
             # converts more
-            if state_heuristic[0] > best_heuristic[0]:
-                #best_heuristic[0] = state_heuristic[0]
-                best_heuristic = state_heuristic
+            if state["heuristic_result"][0] > best_heuristic[0]:
+                best_heuristic = state["heuristic_result"]
                 continue
 
             # shorter distance
-            if state_heuristic[0] == best_heuristic[0] and state_heuristic[1] < best_heuristic[1]:
-                best_heuristic = state_heuristic
+            if state["heuristic_result"][0] == best_heuristic[0] and state["heuristic_result"][1] < best_heuristic[1]:
+                best_heuristic = state["heuristic_result"]
 
 
         # keeping only desirable nodes
         pruned_list = []
-        shortest_move_set = 363
         for state in potential_moves:
             
             # solution found
             if state["gameEnded"]:
                 solution = state["previous_moves"]
                 break
-                
-
-            state_heuristic = state["heuristic_result"]
-            # keep most desirable nodes
-            #state_heuristic[0] == best_heuristic[0] or
-
-            # converts more or equal hexes
-            if (state_heuristic[0] == best_heuristic[0]) and (state_heuristic[1] == best_heuristic[1]):
-                pruned_list.append(state)
-                #continue
             
-            # shorter or equal distance
-            #if state_heuristic[1] == best_heuristic[1]:
-            #    pruned_list.append(state)
-             #   continue
-
-            #if state_heuristic[0] == best_heuristic[0] or state_heuristic[1] == best_heuristic[1]:
-                #pruned_list.append(state)
-
+            # converts more or equal hexes
+            if state["heuristic_result"] == best_heuristic:
+                pruned_list.append(state)
+            
         best_states = pruned_list
 
          
@@ -146,20 +114,12 @@ def heuristic(state_under_consideration: dict[dict, dict]):
 
             distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
 
-    
-                
-
             if distance > shortest_distance:
-        
                 continue
 
             if distance < shortest_distance:
-     
                 shortest_distance = distance
-                continue
 
-
-                
 
     return shortest_distance
     
