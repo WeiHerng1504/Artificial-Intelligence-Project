@@ -53,35 +53,27 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
             # state format
             # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
-      
 
+            if state["gameEnded"]:
+                return  state["previous_moves"]
+
+       
             # converts more
             if state["heuristic_result"][0] > best_heuristic[0]:
                 best_heuristic = state["heuristic_result"]
                 continue
 
             # shorter distance
+
             if state["heuristic_result"][0] == best_heuristic[0] and state["heuristic_result"][1] < best_heuristic[1]:
                 best_heuristic = state["heuristic_result"]
 
 
         # keeping only desirable nodes
-        pruned_list = []
-        for state in potential_moves:
-            
-            # solution found
-            if state["gameEnded"]:
-                solution = state["previous_moves"]
-                break
-            
-            # converts more or equal hexes
-            if state["heuristic_result"] == best_heuristic:
-                pruned_list.append(state)
-            
-        best_states = pruned_list
+        best_states = [state for state in potential_moves if state["heuristic_result"] == best_heuristic]
+        #best_states = potential_moves
 
-         
-
+        
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
     # to True to see a colour-coded version (if your terminal supports it).
@@ -161,16 +153,18 @@ def generateState(predecessor: dict[dict, list, list, bool], redHex: tuple, dire
     # LOOK AT THIS!!!
     heuristic_result.append(heuristic(new_grid))
 
+    # state with no redhexes, avoid
+    if not new_grid["redHexes"]:
+        return None
+
     if not new_grid["blueHexes"]:
         gameEnded = True
     else:
         gameEnded = False
 
-    # state with no redhexes, avoid
-    if not new_grid["redHexes"]:
-        return None
 
     new_state["previous_moves"].append(redHex + direction)
+
     return {"gridLayout": new_grid, "previous_moves": new_state["previous_moves"], "heuristic_result": heuristic_result, "gameEnded": gameEnded}
 
 
