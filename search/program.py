@@ -55,7 +55,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
             # state = {gridLayout, previous_moves, heuristic_results, gameEnded}
 
             if state["gameEnded"]:
-                return  state["previous_moves"]
+                solution = state["previous_moves"]
+                break
 
        
             # converts more
@@ -70,8 +71,9 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
 
         # keeping only desirable nodes
-        best_states = [state for state in potential_moves if state["heuristic_result"] == best_heuristic]
-        #best_states = potential_moves
+        if not solution:
+            best_states = [state for state in potential_moves if state["heuristic_result"] == best_heuristic]
+
 
         
     # The render_board function is useful for debugging -- it will print out a 
@@ -102,9 +104,12 @@ def heuristic(state_under_consideration: dict[dict, dict]):
 
             if man_dist[1] > 3:
                 man_dist[1] = abs(man_dist[1] - 7)
-            
 
-            distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
+
+            if man_dist[0] != 0 and man_dist[1] != 0 and man_dist[0] / man_dist[1] == -1:
+                distance = abs(man_dist[0])
+            else:
+                distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
 
             if distance > shortest_distance:
                 continue
