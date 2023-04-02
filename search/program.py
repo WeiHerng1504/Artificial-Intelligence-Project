@@ -16,55 +16,56 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     See the specification document for more details.
     """
 
-    valid_directions = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
-    current_grid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
+    validDirections = ((0, 1), (1, 0), (0, -1), (-1, 0), (1, -1), (-1, 1))
+    currentGrid = {"blueHexes": check_grid(input, 'b'), "redHexes": check_grid(input, 'r')}
 
     # state format
     # state = {gridLayout, previousMoves, heuristicResults, gameEnded}
-    starting_state = {"gridLayout": current_grid, "previousMoves": [], "heuristicResult": [], "gameEnded": False}
+    startingState = {"gridLayout": currentGrid, "previousMoves": [], "heuristicResult": [], "gameEnded": False}
 
-    best_states = [starting_state]
+    bestStates = [startingState]
     solution = False
 
     while not solution:
         
-        potential_moves = []
+        potentialMoves = []
 
-        for state in best_states:
+        for state in bestStates:
             # for all red hexes
             for redHex in state["gridLayout"]["redHexes"]:
                 #generate a possible future state
-                for direction in valid_directions:
-                    new_state = generateState(state, redHex, direction)
-                    if new_state:
-                        potential_moves.append(new_state)
+                for direction in validDirections:
+                    newState = generateState(state, redHex, direction)
+                    if newState:
+                        potentialMoves.append(newState)
 
 
         # run a heuristic comparison
         # heuristic has two components, first item is hexes converted, 
         # second item is shortest straight line distance
-        bestHeuristic = [0, 1000]
-        for state in potential_moves:
 
+        # placeholder values to be replaced
+        bestHeuristic = [0, 1000]
+
+        for state in potentialMoves:
+            # solution found
             if state["gameEnded"]:
                 solution = state["previousMoves"]
                 break
 
-       
-            # converts more
+            # converts more hexes
             if state["heuristicResult"][0] > bestHeuristic[0]:
                 bestHeuristic = state["heuristicResult"]
                 continue
 
             # shorter distance
-
-            if state["heuristiResult"][0] == bestHeuristic[0] and state["heuristicResult"][1] < bestHeuristic[1]:
+            if state["heuristicResult"][0] == bestHeuristic[0] and state["heuristicResult"][1] < bestHeuristic[1]:
                 bestHeuristic = state["heuristicResult"]
 
 
         # keeping only desirable nodes
         if not solution:
-            best_states = [state for state in potential_moves if state["heuristicResult"] == bestHeuristic]
+            bestStates = [state for state in potentialMoves if state["heuristicResult"] == bestHeuristic]
 
 
         
@@ -79,91 +80,102 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     return solution
 
-# straight line distance
-def heuristic(state_under_consideration: dict[dict, dict]):
+# Estimates the shortest straight line distance between a blue and red hexagon
+# Takes a grid layout as input.
+# Returns the shortest distance between two opposing hexes
+def heuristic(layout: dict[dict, dict]):
 
-    shortest_distance = 1000
+    # placeholder value to be replaced
+    shortestDistance = 1000
  
-    for blueHex in state_under_consideration["blueHexes"].keys():
-        for redHex in state_under_consideration["redHexes"].keys():
+    for blueHex in layout["blueHexes"].keys():
+        for redHex in layout["redHexes"].keys():
 
-             # directions to move, normalized
-            man_dist = [abs(blueHex[0] - redHex[0]), abs(blueHex[1] - redHex[1])]
+             # manhattan distance with relative direction
+            manDist = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
 
             # check if wrapping is closer
-            if man_dist[0] > 3:
-                man_dist[0] = abs(man_dist[0] - 7)
-
-            if man_dist[1] > 3:
-                man_dist[1] = abs(man_dist[1] - 7)
+            for axis in range(len(manDist)):
+                if abs(manDist[axis]) > 3:
+                    if manDist[axis] < 0:
+                        manDist[axis] = manDist[axis] + 7
+                    else:
+                        manDist[axis] = manDist[axis] - 7
 
             # vertical 
-            if man_dist[0] != 0 and man_dist[1] != 0 and man_dist[0] / man_dist[1] == -1:
-                distance = abs(man_dist[0])
+            if manDist[0] != 0 and manDist[1] != 0 and manDist[0] / manDist[1] == -1:
+                distance = abs(manDist[0])
             # general case
             else:
-                distance = math.hypot(abs(man_dist[0]), abs(man_dist[1]))
+                distance = math.hypot(abs(manDist[0]), abs(manDist[1]))
 
-            if distance > shortest_distance:
+            # longer, ignore
+            if distance > shortestDistance:
                 continue
+            
+            # shorter, keep track
+            if distance < shortestDistance:
+                shortestDistance = distance
 
-            if distance < shortest_distance:
-                shortest_distance = distance
 
-
-    return shortest_distance
+    return shortestDistance
     
 
-    
-def generateState(predecessor: dict[dict, list, list, bool], redHex: tuple, direction: tuple):
+# Simulate a move. 
+# Takes a state, red hexagon location and movement direction as input.
+# Returns the simulated move as a new state
+def generateState(predecessor: dict[dict, list, list, bool], 
+                  redHex: tuple, direction: tuple):
 
     # state format
     # state = {gridLayout, previousMoves, heuristic_results, gameEnded}
 
-    heuristic_result = [0]
-    new_state = copy.deepcopy(predecessor)
-    new_grid = new_state["gridLayout"]
+    heuristicResult = [0]
+    newState = copy.deepcopy(predecessor)
+    newGrid = newState["gridLayout"]
     
-    for power in range(1, new_grid["redHexes"][redHex][1] + 1):
+    for power in range(1, newGrid["redHexes"][redHex][1] + 1):
 
         r_new = (redHex[0] + direction[0] * power) % 7
         q_new = (redHex[1] + direction[1] * power) % 7
 
         # remove a blue hex
-        if (r_new, q_new) in new_grid["blueHexes"]:
-            heuristic_result[0] += 1
-            new_grid["redHexes"].update({ (r_new, q_new): (new_grid["blueHexes"][(r_new, q_new)])} )
-            new_grid["blueHexes"].pop((r_new, q_new), None)
+        if (r_new, q_new) in newGrid["blueHexes"]:
+            heuristicResult[0] += 1
+            newGrid["redHexes"].update({(r_new, q_new): 
+                            (newGrid["blueHexes"][(r_new, q_new)])})
+            newGrid["blueHexes"].pop((r_new, q_new), None)
    
         # update a red hex
-        if (r_new, q_new) in new_grid["redHexes"]:
-
-            if new_grid["redHexes"][(r_new, q_new)][1] < 6:
-                new_grid["redHexes"].update({(r_new, q_new) : ('r', new_grid["redHexes"][(r_new, q_new)][1] + 1)})
+        if (r_new, q_new) in newGrid["redHexes"]:
+            if newGrid["redHexes"][(r_new, q_new)][1] < 6:
+                newGrid["redHexes"].update({(r_new, q_new): 
+                            ('r', newGrid["redHexes"][(r_new, q_new)][1] + 1)})
             else:
-                new_grid["redHexes"].pop((r_new, q_new), None)
+                newGrid["redHexes"].pop((r_new, q_new), None)
         else:
-            new_grid["redHexes"].update({(r_new, q_new) : ('r', 1)})
+            newGrid["redHexes"].update({(r_new, q_new) : ('r', 1)})
 
     # remove starting hex
-    new_grid["redHexes"].pop((redHex))
+    newGrid["redHexes"].pop((redHex))
 
-    # LOOK AT THIS!!!
-    heuristic_result.append(heuristic(new_grid))
+    # update heuristic
+    heuristicResult.append(heuristic(newGrid))
 
     # state with no redhexes, avoid
-    if not new_grid["redHexes"]:
+    if not newGrid["redHexes"]:
         return None
 
-    if not new_grid["blueHexes"]:
+    # terminal state?
+    if not newGrid["blueHexes"]:
         gameEnded = True
     else:
         gameEnded = False
 
+    newState["previousMoves"].append(redHex + direction)
 
-    new_state["previousMoves"].append(redHex + direction)
-
-    return {"gridLayout": new_grid, "previous_moves": new_state["previousMoves"], "heuristic_result": heuristic_result, "gameEnded": gameEnded}
+    return {"gridLayout": newGrid, "previousMoves": newState["previousMoves"], 
+            "heuristicResult": heuristicResult, "gameEnded": gameEnded}
 
 
 # checks the current game state, returns dict of opponent tiles. If none, returns empty dict.
