@@ -96,14 +96,20 @@ def heuristic(state_under_consideration: dict[dict, dict]):
         for redHex in state_under_consideration["redHexes"].keys():
 
              # directions to move, normalized
-            man_dist = [abs(blueHex[0] - redHex[0]), abs(blueHex[1] - redHex[1])]
+            man_dist = [blueHex[0] - redHex[0], blueHex[1] - redHex[1]]
 
-            # initial idea, NEEDS IMPROVEMENT!!!!
-            if man_dist[0] > 3:
-                man_dist[0] = abs(man_dist[0] - 7)
+    
 
-            if man_dist[1] > 3:
-                man_dist[1] = abs(man_dist[1] - 7)
+            for axis in range(len(man_dist)):
+                if abs(man_dist[axis]) > 3:
+                    if man_dist[axis] < 0:
+                        man_dist[axis] = man_dist[axis] + 7
+                    else:
+                        man_dist[axis] = man_dist[axis] - 7
+
+
+          
+ 
 
 
             if man_dist[0] != 0 and man_dist[1] != 0 and man_dist[0] / man_dist[1] == -1:
