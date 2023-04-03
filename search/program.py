@@ -41,8 +41,10 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
 
         # run a heuristic comparison
-        # heuristic has two components, first item is hexes converted, 
+        # heuristic has two components, 
+        # first item is hexes converted, 
         # second item is shortest straight line distance
+        # we prioritize first item
 
         # placeholder values to be replaced
         bestHeuristic = [0, 1000]
@@ -105,6 +107,10 @@ def heuristic(layout: dict[dict, dict]):
             # vertical 
             if manDist[0] != 0 and manDist[1] != 0 and manDist[0] / manDist[1] == -1:
                 distance = abs(manDist[0])
+            # closer vertically compared to horizontally
+            elif manDist[0] != 0 and manDist[1] != 0 and manDist[0] / manDist[1] < 0:
+                distance = math.sqrt( math.pow(manDist[0], 2) + math.pow(manDist[1], 2) - 
+                            2*abs(manDist[0])*abs(manDist[1])*math.cos(1/3 * math.pi))
             # general case
             else:
                 distance = math.hypot(abs(manDist[0]), abs(manDist[1]))
@@ -116,7 +122,6 @@ def heuristic(layout: dict[dict, dict]):
             # shorter, keep track
             if distance < shortestDistance:
                 shortestDistance = distance
-
 
     return shortestDistance
     
