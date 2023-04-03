@@ -115,10 +115,6 @@ def heuristic(layout: dict[dict, dict]):
             else:
                 distance = math.hypot(abs(manDist[0]), abs(manDist[1]))
 
-            # longer, ignore
-            if distance > shortestDistance:
-                continue
-            
             # shorter, keep track
             if distance < shortestDistance:
                 shortestDistance = distance
