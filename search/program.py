@@ -21,7 +21,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     # state format
     # state = {gridLayout, previousMoves, heuristicResults, gameEnded}
-    startingState = {"gridLayout": currentGrid, "previousMoves": [], "heuristicResult": [], "gameEnded": False}
+    startingState = {"gridLayout": currentGrid, "previousMoves": [], 
+                     "heuristicResult": [], "gameEnded": False}
 
     bestStates = [startingState]
     solution = False
@@ -131,7 +132,9 @@ def generateState(predecessor: dict[dict, list, list, bool],
     # state format
     # state = {gridLayout, previousMoves, heuristic_results, gameEnded}
 
+    # initialize with first component of heuristic 
     heuristicResult = [0]
+
     newState = copy.deepcopy(predecessor)
     newGrid = newState["gridLayout"]
     
