@@ -80,6 +80,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     return solution
 
+
 # Estimates the shortest straight line distance between a blue and red hexagon
 # Takes a grid layout as input.
 # Returns the shortest distance between two opposing hexes
