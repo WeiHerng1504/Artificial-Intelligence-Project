@@ -50,6 +50,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
         # placeholder values to be replaced
         bestHeuristic = [0, 1000]
 
+        # finding the best heuristic
         for state in potentialMoves:
             # solution found
             if state["gameEnded"]:
@@ -62,13 +63,15 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                 continue
 
             # shorter distance
-            if state["heuristicResult"][0] == bestHeuristic[0] and state["heuristicResult"][1] < bestHeuristic[1]:
+            if (state["heuristicResult"][0] == bestHeuristic[0]) and \
+                        (state["heuristicResult"][1] < bestHeuristic[1]):
                 bestHeuristic = state["heuristicResult"]
 
 
         # keeping only desirable nodes
         if not solution:
-            bestStates = [state for state in potentialMoves if state["heuristicResult"] == bestHeuristic]
+            bestStates = [state for state in potentialMoves if 
+                          state["heuristicResult"] == bestHeuristic]
 
 
         
@@ -128,9 +131,6 @@ def heuristic(layout: dict[dict, dict]):
 # Returns the simulated move as a new state
 def generateState(predecessor: dict[dict, list, list, bool], 
                   redHex: tuple, direction: tuple):
-
-    # state format
-    # state = {gridLayout, previousMoves, heuristic_results, gameEnded}
 
     # initialize with first component of heuristic 
     heuristicResult = [0]
