@@ -30,7 +30,6 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     while not solution:
         
         potentialMoves = []
-
         for state in bestStates:
             # for all red hexes
             for redHex in state["gridLayout"]["redHexes"]:
@@ -39,7 +38,6 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                     newState = generateState(state, redHex, direction)
                     if newState:
                         potentialMoves.append(newState)
-
 
         # run a heuristic comparison
         # heuristic has two components, 
@@ -67,14 +65,11 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                         (state["heuristicResult"][1] < bestHeuristic[1]):
                 bestHeuristic = state["heuristicResult"]
 
-
         # keeping only desirable nodes
         if not solution:
             bestStates = [state for state in potentialMoves if 
                           state["heuristicResult"] == bestHeuristic]
 
-
-        
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
     # to True to see a colour-coded version (if your terminal supports it).
@@ -82,7 +77,6 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     # Here we're returning "hardcoded" actions for the given test.csv file.
     # Of course, you'll need to replace this with an actual solution...
-
 
     return solution
 
