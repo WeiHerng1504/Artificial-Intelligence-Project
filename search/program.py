@@ -4,6 +4,7 @@
 import math
 import copy
 from .utils import render_board
+from collections import deque
 
 
 def search(input: dict[tuple, tuple]) -> list[tuple]:
@@ -21,15 +22,30 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     # state format
     # state = {gridLayout, previousMoves, heuristicResults, gameEnded}
+    # startingState = {"gridLayout": currentGrid, "previousMoves": [], 
+    #                  "heuristicResult": [], "gameEnded": False}
     startingState = {"gridLayout": currentGrid, "previousMoves": [], 
-                     "heuristicResult": [], "gameEnded": False}
+                     "heuristicResult": 0, "gameEnded": False}
 
     bestStates = [startingState]
-    solution = False
+    solution = False    
+    counter = 0
 
     while not solution:
         
         potentialMoves = []
+        print(len(bestStates))
+        # print(bestStates)
+        if (counter == 4):
+            # print(max(state["heuristicResult"] for state in bestStates))
+            for state in bestStates:
+                if (0, 4, 1, -1) in state["previousMoves"]:
+                    print(state)
+                    print()
+                # if state["heuristicResult"] == 2.5:
+                #     print(state)
+                #     print()
+            break
         for state in bestStates:
             # for all red hexes
             for redHex in state["gridLayout"]["redHexes"]:
@@ -46,8 +62,8 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
         # we prioritize first item
 
         # placeholder values to be replaced
-        bestHeuristic = [0, 1000]
-
+        #bestHeuristic = [0, 1000]
+        bestHeuristic = -1
         # finding the best heuristic
         for state in potentialMoves:
             # solution found
@@ -55,21 +71,25 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                 solution = state["previousMoves"]
                 break
 
-            # converts more hexes
-            if state["heuristicResult"][0] > bestHeuristic[0]:
+            if state["heuristicResult"] > bestHeuristic:
                 bestHeuristic = state["heuristicResult"]
-                continue
 
-            # shorter distance
-            if (state["heuristicResult"][0] == bestHeuristic[0]) and \
-                        (state["heuristicResult"][1] < bestHeuristic[1]):
-                bestHeuristic = state["heuristicResult"]
+            # converts more hexes
+            # if state["heuristicResult"][0] > bestHeuristic[0]:
+            #     bestHeuristic = state["heuristicResult"]
+            #     continue
+
+            # # shorter distance
+            # if (state["heuristicResult"][0] == bestHeuristic[0]) and \
+            #             (state["heuristicResult"][1] < bestHeuristic[1]):
+            #     bestHeuristic = state["heuristicResult"]
 
         # keeping only desirable nodes
         if not solution:
             bestStates = [state for state in potentialMoves if 
-                          state["heuristicResult"] == bestHeuristic]
-
+                           state["heuristicResult"] == bestHeuristic]
+            # bestStates = potentialMoves
+        counter += 1
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
     # to True to see a colour-coded version (if your terminal supports it).
@@ -88,6 +108,10 @@ def heuristic(layout: dict[dict, dict]):
 
     # placeholder value to be replaced
     shortestDistance = 1000
+    best_blue = 0
+    best_blue_details = 0
+    best_red = 0
+    best_red_details = 0
  
     for blueHex in layout["blueHexes"].keys():
         for redHex in layout["redHexes"].keys():
@@ -117,8 +141,26 @@ def heuristic(layout: dict[dict, dict]):
             # shorter, keep track
             if distance < shortestDistance:
                 shortestDistance = distance
+                best_red = redHex
+                best_red_details = layout["redHexes"][redHex]
+                best_blue = blueHex
+                best_blue_details = layout["blueHexes"][blueHex]
 
-    return shortestDistance
+    layout["redHexes"].update({best_blue: (best_blue_details[0], best_blue_details[1] + 1)})
+    layout["redHexes"].pop(best_red, None)
+    h = calculate_average_power(layout)
+    return h
+
+def calculate_average_power(grid_layout: dict[dict, dict], color: str):
+    total_power = 0
+
+    for redHex in grid_layout[color]:
+        total_power += grid_layout[color][redHex][1]
+
+    # print(total_power, grid_layout["redHexes"])
+    average_power = total_power / len(grid_layout[color])
+    
+    return average_power
     
 
 # Simulate a move. 
@@ -128,10 +170,13 @@ def generateState(predecessor: dict[dict, list, list, bool],
                   redHex: tuple, direction: tuple):
 
     # initialize with first component of heuristic 
-    heuristicResult = [0]
-
+    #heuristicResult = [0]
     newState = copy.deepcopy(predecessor)
     newGrid = newState["gridLayout"]
+    initial_blue_size = len(newGrid["blueHexes"])
+    initial_red_size = len(newGrid["redHexes"])
+
+    initial_average_power = calculate_average_power(newGrid, "redHexes")
     
     for power in range(1, newGrid["redHexes"][redHex][1] + 1):
 
@@ -140,7 +185,7 @@ def generateState(predecessor: dict[dict, list, list, bool],
 
         # remove a blue hex
         if (r_new, q_new) in newGrid["blueHexes"]:
-            heuristicResult[0] += 1
+            #heuristicResult[0] += 1
             newGrid["redHexes"].update({(r_new, q_new): 
                             (newGrid["blueHexes"][(r_new, q_new)])})
             newGrid["blueHexes"].pop((r_new, q_new), None)
@@ -158,13 +203,26 @@ def generateState(predecessor: dict[dict, list, list, bool],
     # remove starting hex
     newGrid["redHexes"].pop((redHex))
 
+    end_blue_size = len(newGrid["blueHexes"])
+    end_red_size = len(newGrid["redHexes"])
+
     # update heuristic
-    heuristicResult.append(heuristic(newGrid))
+    #heuristicResult.append(heuristic(newGrid))
+    #heuristicResult = max(end_average_power - initial_average_power, heuristic(newGrid))
 
     # state with no redhexes, avoid
     if not newGrid["redHexes"]:
         return None
-
+    #print(newGrid)
+    end_average_power = calculate_average_power(newGrid, "redHexes")
+    # heuristicResult = max(end_average_power - initial_average_power, heuristic(copy.deepcopy(newGrid)))
+    #heuristicResult = max(end_average_power - initial_average_power, heuristic(copy.deepcopy(newGrid)))
+    heuristicResult = (end_average_power - initial_average_power) + heuristic(copy.deepcopy(newGrid))
+    # if (redHex + direction) == (0, 4, 1, -1):
+    #     print(initial_average_power)
+    #     print(end_average_power)
+    #     print(heuristic(copy.deepcopy(newGrid)))
+    #heuristicResult = end_average_power - initial_average_power
     # terminal state?
     if not newGrid["blueHexes"]:
         gameEnded = True
