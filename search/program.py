@@ -27,26 +27,19 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     startingState = {"gridLayout": currentGrid, "previousMoves": [], 
                      "heuristicResult": 0, "gameEnded": False}
 
-    bestStates = [startingState]
+    all_states = [[startingState]]
+    current_level = 0
     solution = False    
+    solution_index = 0
     counter = 0
+    best_heuristic = 0
 
     while not solution:
-        
         potentialMoves = []
-        print(len(bestStates))
-        # print(bestStates)
-        if (counter == 4):
-            # print(max(state["heuristicResult"] for state in bestStates))
-            for state in bestStates:
-                if (0, 4, 1, -1) in state["previousMoves"]:
-                    print(state)
-                    print()
-                # if state["heuristicResult"] == 2.5:
-                #     print(state)
-                #     print()
-            break
-        for state in bestStates:
+        state_index = 0
+        #print(all_states)
+        for state in all_states[current_level]:
+            #state = all_states[current_level][state_index]
             # for all red hexes
             for redHex in state["gridLayout"]["redHexes"]:
                 #generate a possible future state
@@ -54,42 +47,41 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
                     newState = generateState(state, redHex, direction)
                     if newState:
                         potentialMoves.append(newState)
+            state_index += 1
 
-        # run a heuristic comparison
-        # heuristic has two components, 
-        # first item is hexes converted, 
-        # second item is shortest straight line distance
-        # we prioritize first item
-
-        # placeholder values to be replaced
-        #bestHeuristic = [0, 1000]
-        bestHeuristic = -1
+        #print("HERE")
         # finding the best heuristic
+        potentialMoves.sort(key=lambda state: state["heuristicResult"])
+        best_heuristic = potentialMoves[0]["heuristicResult"]
+
+        state_index = 0
+        #state = potentialMoves[state_index]
         for state in potentialMoves:
-            # solution found
             if state["gameEnded"]:
                 solution = state["previousMoves"]
+                solution_index = potentialMoves.index(state)
                 break
 
-            if state["heuristicResult"] > bestHeuristic:
-                bestHeuristic = state["heuristicResult"]
+        #print("HERE 2")
+        if solution: break
 
-            # converts more hexes
-            # if state["heuristicResult"][0] > bestHeuristic[0]:
-            #     bestHeuristic = state["heuristicResult"]
-            #     continue
+        all_states.append(potentialMoves)
+        #print(all_states)
+        current_level += 1 
 
-            # # shorter distance
-            # if (state["heuristicResult"][0] == bestHeuristic[0]) and \
-            #             (state["heuristicResult"][1] < bestHeuristic[1]):
-            #     bestHeuristic = state["heuristicResult"]
+    best_length = len(solution)
+    current_state = 0
+    current_level =- 1
+    while current_level > 0:
+        for state in all_states[current_level]:
+            if state["gameEnded"]:
+                solution = state["previousMoves"]
+                current_level -= 1
+                break
+        
+            
+        
 
-        # keeping only desirable nodes
-        if not solution:
-            bestStates = [state for state in potentialMoves if 
-                           state["heuristicResult"] == bestHeuristic]
-            # bestStates = potentialMoves
-        counter += 1
     # The render_board function is useful for debugging -- it will print out a 
     # board state in a human-readable format. Try changing the ansi argument 
     # to True to see a colour-coded version (if your terminal supports it).
@@ -173,8 +165,8 @@ def generateState(predecessor: dict[dict, list, list, bool],
     #heuristicResult = [0]
     newState = copy.deepcopy(predecessor)
     newGrid = newState["gridLayout"]
-    initial_blue_size = len(newGrid["blueHexes"])
-    initial_red_size = len(newGrid["redHexes"])
+    increase_in_power = 0
+    decrease_in_power = 0
 
     initial_average_power = calculate_average_power(newGrid, "redHexes")
     
@@ -195,7 +187,9 @@ def generateState(predecessor: dict[dict, list, list, bool],
             if newGrid["redHexes"][(r_new, q_new)][1] < 6:
                 newGrid["redHexes"].update({(r_new, q_new): 
                             ('r', newGrid["redHexes"][(r_new, q_new)][1] + 1)})
+                increase_in_power += newGrid["redHexes"][(r_new, q_new)][1] + 1
             else:
+                decrease_in_power += 1 
                 newGrid["redHexes"].pop((r_new, q_new), None)
         else:
             newGrid["redHexes"].update({(r_new, q_new) : ('r', 1)})
@@ -203,8 +197,7 @@ def generateState(predecessor: dict[dict, list, list, bool],
     # remove starting hex
     newGrid["redHexes"].pop((redHex))
 
-    end_blue_size = len(newGrid["blueHexes"])
-    end_red_size = len(newGrid["redHexes"])
+    net_change_in_power = increase_in_power - decrease_in_power
 
     # update heuristic
     #heuristicResult.append(heuristic(newGrid))
@@ -217,7 +210,7 @@ def generateState(predecessor: dict[dict, list, list, bool],
     end_average_power = calculate_average_power(newGrid, "redHexes")
     # heuristicResult = max(end_average_power - initial_average_power, heuristic(copy.deepcopy(newGrid)))
     #heuristicResult = max(end_average_power - initial_average_power, heuristic(copy.deepcopy(newGrid)))
-    heuristicResult = (end_average_power - initial_average_power) + heuristic(copy.deepcopy(newGrid))
+    #heuristicResult = (end_average_power - initial_average_power) + heuristic(copy.deepcopy(newGrid))
     # if (redHex + direction) == (0, 4, 1, -1):
     #     print(initial_average_power)
     #     print(end_average_power)
@@ -232,7 +225,7 @@ def generateState(predecessor: dict[dict, list, list, bool],
     newState["previousMoves"].append(redHex + direction)
 
     return {"gridLayout": newGrid, "previousMoves": newState["previousMoves"], 
-            "heuristicResult": heuristicResult, "gameEnded": gameEnded}
+            "heuristicResult": net_change_in_power, "gameEnded": gameEnded}
 
 
 # checks the current game state, returns dict of opponent tiles. If none, returns empty dict.
