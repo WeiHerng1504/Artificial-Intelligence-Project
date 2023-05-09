@@ -33,41 +33,48 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
     solution_index = 0
     counter = 0
     best_heuristic = 0
+    previous_stopping_point = []
 
     while not solution:
         potentialMoves = []
         state_index = 0
-        #print(all_states)
         for state in all_states[current_level]:
-            #state = all_states[current_level][state_index]
+
             # for all red hexes
             for redHex in state["gridLayout"]["redHexes"]:
                 #generate a possible future state
                 for direction in validDirections:
                     newState = generateState(state, redHex, direction)
                     if newState:
+                        if newState["gameEnded"]:
+                            solution = newState["previousMoves"]
+                            break
                         potentialMoves.append(newState)
+                        
+                if solution:
+                    break
             state_index += 1
 
-        #print("HERE")
-        # finding the best heuristic
-        potentialMoves.sort(key=lambda state: state["heuristicResult"])
-        best_heuristic = potentialMoves[0]["heuristicResult"]
+        if not solution:
+            #print("HERE")
+            # finding the best heuristic
+            potentialMoves.sort(key=lambda state: state["heuristicResult"], reverse=True)
+            best_heuristic = potentialMoves[0]["heuristicResult"]
 
-        state_index = 0
-        #state = potentialMoves[state_index]
-        for state in potentialMoves:
-            if state["gameEnded"]:
-                solution = state["previousMoves"]
-                solution_index = potentialMoves.index(state)
-                break
+            state_index = 0
+            #state = potentialMoves[state_index]
+            for state in potentialMoves:
+                if state["gameEnded"]:
+                    solution = state["previousMoves"]
+                    solution_index = potentialMoves.index(state)
+                    break
 
-        #print("HERE 2")
-        if solution: break
+            #print("HERE 2")
+            if solution: break
 
-        all_states.append(potentialMoves)
-        #print(all_states)
-        current_level += 1 
+            all_states.append(potentialMoves)
+            #print(all_states)
+            current_level += 1 
 
     best_length = len(solution)
     current_state = 0
@@ -89,7 +96,7 @@ def search(input: dict[tuple, tuple]) -> list[tuple]:
 
     # Here we're returning "hardcoded" actions for the given test.csv file.
     # Of course, you'll need to replace this with an actual solution...
-
+    #print(solution_state)
     return solution
 
 
@@ -140,19 +147,18 @@ def heuristic(layout: dict[dict, dict]):
 
     layout["redHexes"].update({best_blue: (best_blue_details[0], best_blue_details[1] + 1)})
     layout["redHexes"].pop(best_red, None)
-    h = calculate_average_power(layout)
+    h = calculate_power(layout)
     return h
 
-def calculate_average_power(grid_layout: dict[dict, dict], color: str):
+def calculate_power(grid_layout: dict[dict, dict], color: str):
     total_power = 0
 
     for redHex in grid_layout[color]:
         total_power += grid_layout[color][redHex][1]
 
     # print(total_power, grid_layout["redHexes"])
-    average_power = total_power / len(grid_layout[color])
     
-    return average_power
+    return total_power
     
 
 # Simulate a move. 
@@ -168,7 +174,7 @@ def generateState(predecessor: dict[dict, list, list, bool],
     increase_in_power = 0
     decrease_in_power = 0
 
-    initial_average_power = calculate_average_power(newGrid, "redHexes")
+    initial_power = calculate_power(newGrid, "redHexes")
     
     for power in range(1, newGrid["redHexes"][redHex][1] + 1):
 
@@ -187,17 +193,21 @@ def generateState(predecessor: dict[dict, list, list, bool],
             if newGrid["redHexes"][(r_new, q_new)][1] < 6:
                 newGrid["redHexes"].update({(r_new, q_new): 
                             ('r', newGrid["redHexes"][(r_new, q_new)][1] + 1)})
-                increase_in_power += newGrid["redHexes"][(r_new, q_new)][1] + 1
+                increase_in_power += newGrid["redHexes"][(r_new, q_new)][1]
             else:
                 decrease_in_power += 1 
                 newGrid["redHexes"].pop((r_new, q_new), None)
         else:
+            increase_in_power += 1
             newGrid["redHexes"].update({(r_new, q_new) : ('r', 1)})
 
     # remove starting hex
+    decrease_in_power += newGrid["redHexes"][redHex][1]
     newGrid["redHexes"].pop((redHex))
+    
+    end_power = calculate_power(newGrid, "redHexes")
 
-    net_change_in_power = increase_in_power - decrease_in_power
+    net_change_in_power = end_power - initial_power + predecessor["heuristicResult"]
 
     # update heuristic
     #heuristicResult.append(heuristic(newGrid))
@@ -207,7 +217,7 @@ def generateState(predecessor: dict[dict, list, list, bool],
     if not newGrid["redHexes"]:
         return None
     #print(newGrid)
-    end_average_power = calculate_average_power(newGrid, "redHexes")
+    
     # heuristicResult = max(end_average_power - initial_average_power, heuristic(copy.deepcopy(newGrid)))
     #heuristicResult = max(end_average_power - initial_average_power, heuristic(copy.deepcopy(newGrid)))
     #heuristicResult = (end_average_power - initial_average_power) + heuristic(copy.deepcopy(newGrid))
